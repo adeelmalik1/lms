@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ["16"]  # Specify Node.js version 16 here
+        node-version: ["16"]
 
     services:
       mongodb:
@@ -29,18 +29,25 @@ jobs:
       PORT: 3000
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          node-version: ${{ matrix.node-version }} # Ensure node version for checkout
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ matrix.node-version }} # Ensure node version for setup
+
       - name: Install Dependencies
         run: |
           npm install --legacy-peer-deps
           npm run build
+
       - name: Start server
         run: |
           nohup npm run start &
           sleep 3
+
       - name: Run tests
         run: npm run test
