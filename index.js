@@ -1,41 +1,45 @@
-import express from 'express';
-import crypto from 'crypto';
-import cluster from 'cluster';
+const express = require('express');
+const mongoose = require('mongoose');
+const cookieSession = require('cookie-session');
+const passport = require('passport');
+const bodyParser = require('body-parser');
+const keys = require('./config/keys');
+
+require('./models/User');
+require('./models/Blog');
+require('./services/passport');
+
+mongoose.Promise = global.Promise;
+mongoose.connect(keys.mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 const app = express();
 
-// if(cluster.isPrimary){
-//     cluster.fork();
-//     cluster.fork();
-//     cluster.fork();
-//     cluster.fork();
+app.use(bodyParser.json());
+app.use(
+  cookieSession({
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    keys: [keys.cookieKey],
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
-// } else {
-//     function doWork(durations){
-//         const startDate = new Date();
-//         while(new Date() - startDate < durations) {}
-//     }
-    
-//     app.get('/', (req, res) => {
-//         doWork(5000);
-//         res.send('Hello World!');
-//     } );
+require('./routes/authRoutes')(app);
+require('./routes/blogRoutes')(app);
 
-//     app.get('/fast', (req, res) => {
-//         res.send('Fast response');
-//     } );
+if (['production'].includes(process.env.NODE_ENV)) {
+  app.use(express.static('client/build'));
 
-//     app.listen(3000);
-// }
+  const path = require('path');
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve('client', 'build', 'index.html'));
+  });
+}
 
-app.get('/', (req, res)=> {
-    crypto.pbkdf2('a', 'b', 100000, 512, 'sha512', ()=> {
-        res.send('Hello World!')
-    });
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Listening on port`, PORT);
 });
-
-app.get('/fast', (req, res)=> {
-    res.send('Its fast!');
-});
-
-app.listen(3000);
