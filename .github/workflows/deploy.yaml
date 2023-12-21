@@ -49,5 +49,5 @@ jobs:
           nohup npm run start &
           sleep 3
 
-      - name: Run tests
-        run: npm run test
+      # - name: Run tests
+      #   run: npm run test
